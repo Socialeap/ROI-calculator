@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hello! Ultra ROI Calculator</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Custom Slider Styling */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 24px; /* Larger thumb for touch */
+            width: 24px;
+            border-radius: 50%;
+            background: #7e22ce; /* purple-700 */
+            cursor: pointer;
+            margin-top: -10px;
+            box-shadow: 0 0 0 4px rgba(126, 34, 206, 0.2);
+            transition: transform 0.1s;
+        }
+        input[type=range]:active::-webkit-slider-thumb {
+            transform: scale(1.1);
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: #e2e8f0;
+            border-radius: 2px;
+        }
+        
+        /* Modal Animation */
+        #roi-modal {
+            transition: opacity 0.3s ease;
+        }
+        #roi-modal.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        #roi-modal:not(.hidden) {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        #roi-modal-content {
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            transform: scale(1);
+        }
+        #roi-modal.hidden #roi-modal-content {
+            transform: scale(0.95);
+        }
+
+        /* Mobile Scroll Fix */
+        .touch-scroll {
+            -webkit-overflow-scrolling: touch;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans text-slate-900">
+
+    <!-- TRIGGER BUTTON (Example) -->
+    <div class="flex flex-col items-center justify-center min-h-screen gap-4 p-4">
+        <h1 class="text-2xl font-bold text-center">Mobile-Ready ROI Widget</h1>
+        <button onclick="openRoiCalculator()" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transition-transform hover:scale-105 flex items-center gap-2 active:scale-95">
+            <i class="fas fa-calculator"></i> Calculate ROI
+        </button>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- WIDGET CODE STARTS HERE -->
+    <!-- ========================================== -->
+    
+    <div id="roi-modal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 bg-slate-900/90 backdrop-blur-sm hidden transition-opacity duration-300" aria-hidden="true">
+        
+        <!-- Modal Content -->
+        <div id="roi-modal-content" class="bg-white w-full max-w-5xl sm:rounded-2xl rounded-t-2xl shadow-2xl flex flex-col h-[90vh] sm:h-auto sm:max-h-[90vh]">
+            
+            <!-- Header -->
+            <div class="flex justify-between items-center p-4 sm:p-6 border-b border-slate-100 bg-slate-50/80 backdrop-blur-md sticky top-0 z-20 rounded-t-2xl">
+                <div>
+                    <div class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium bg-purple-100 text-purple-800 mb-1">
+                        ROI Calculator
+                    </div>
+                    <h2 class="text-xl sm:text-2xl font-bold text-slate-900 leading-tight">Is Hello! Ultra Worth It?</h2>
+                </div>
+                <button onclick="closeRoiCalculator()" class="text-slate-400 hover:text-slate-600 transition-colors p-2 bg-slate-100 rounded-full w-8 h-8 flex items-center justify-center">
+                    <i class="fas fa-times text-lg"></i>
+                </button>
+            </div>
+
+            <!-- Scrollable Body -->
+            <div class="overflow-y-auto p-4 sm:p-8 touch-scroll flex-1">
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
+                    
+                    <!-- INPUTS SECTION -->
+                    <div class="lg:col-span-5 space-y-6">
+                        <div class="space-y-1">
+                            <h3 class="text-base sm:text-lg font-semibold flex items-center gap-2 text-slate-800">
+                                <i class="fas fa-sliders-h text-purple-600"></i> Your Context
+                            </h3>
+                            <p class="text-xs sm:text-sm text-slate-500">Adjust sliders to match your business.</p>
+                        </div>
+
+                        <!-- Input 1: Hourly Rate -->
+                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 shadow-sm">
+                            <div class="flex justify-between items-center mb-4">
+                                <label class="text-sm font-medium text-slate-700 flex items-center gap-2">
+                                    <i class="fas fa-dollar-sign text-slate-400 w-4"></i> Hourly Value
+                                </label>
+                                <span class="font-bold text-purple-700 bg-white px-3 py-1 rounded-md border border-purple-100 shadow-sm text-sm">
+                                    $<span id="val-hourly">100</span>/hr
+                                </span>
+                            </div>
+                            <input type="range" id="input-hourly" min="20" max="1000" step="10" value="100" oninput="calculateROI()" aria-label="Hourly Rate">
+                        </div>
+
+                        <!-- Input 2: Hours Spent -->
+                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 shadow-sm">
+                            <div class="flex justify-between items-center mb-4">
+                                <label class="text-sm font-medium text-slate-700 flex items-center gap-2">
+                                    <i class="fas fa-clock text-slate-400 w-4"></i> Weekly Time
+                                </label>
+                                <span class="font-bold text-purple-700 bg-white px-3 py-1 rounded-md border border-purple-100 shadow-sm text-sm">
+                                    <span id="val-hours">5</span> hrs
+                                </span>
+                            </div>
+                            <input type="range" id="input-hours" min="0" max="40" step="1" value="5" oninput="calculateROI()" aria-label="Weekly Hours">
+                        </div>
+
+                        <!-- Input 3: Deal Value -->
+                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 shadow-sm">
+                            <div class="flex justify-between items-center mb-4">
+                                <label class="text-sm font-medium text-slate-700 flex items-center gap-2">
+                                    <i class="fas fa-chart-line text-slate-400 w-4"></i> Deal Value
+                                </label>
+                                <span class="font-bold text-purple-700 bg-white px-3 py-1 rounded-md border border-purple-100 shadow-sm text-sm">
+                                    $<span id="val-deal">1000</span>
+                                </span>
+                            </div>
+                            <input type="range" id="input-deal" min="100" max="10000" step="100" value="1000" oninput="calculateROI()" aria-label="Deal Value">
+                        </div>
+                    </div>
+
+                    <!-- RESULTS SECTION -->
+                    <div class="lg:col-span-7 space-y-4 sm:space-y-6 pb-4">
+                        
+                        <!-- Main Result Card -->
+                        <div class="bg-slate-900 text-white rounded-2xl shadow-xl relative overflow-hidden p-6 sm:p-8">
+                            <!-- Background Effects -->
+                            <div class="absolute top-0 right-0 w-48 sm:w-64 h-48 sm:h-64 bg-purple-600/20 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
+                            <div class="absolute bottom-0 left-0 w-32 sm:w-48 h-32 sm:h-48 bg-indigo-600/20 rounded-full blur-3xl -ml-8 -mb-8 pointer-events-none"></div>
+                            
+                            <div class="relative z-10 grid grid-cols-2 gap-4 sm:gap-8">
+                                <!-- Cost Side -->
+                                <div class="flex flex-col justify-center">
+                                    <p class="text-slate-400 text-[10px] sm:text-xs uppercase tracking-wider font-bold mb-1">Monthly Cost</p>
+                                    <div class="flex items-baseline gap-1">
+                                        <span class="text-3xl sm:text-4xl font-bold">$29</span>
+                                        <span class="text-slate-400 text-xs sm:text-sm">/mo</span>
+                                    </div>
+                                </div>
+
+                                <!-- Value Side -->
+                                <div class="flex flex-col justify-center">
+                                    <p class="text-purple-300 text-[10px] sm:text-xs uppercase tracking-wider font-bold mb-1">Your Value</p>
+                                    <div class="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-2">
+                                        <span class="text-4xl sm:text-5xl font-bold text-green-400 tracking-tight">$<span id="result-value">0</span></span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-3 mb-6">
+                                <div class="inline-flex items-center px-2.5 py-1 rounded text-xs font-bold bg-green-500/20 text-green-300 border border-green-500/30">
+                                    <i class="fas fa-arrow-up mr-1.5"></i> <span id="result-roi">0</span>% ROI
+                                </div>
+                            </div>
+
+                            <!-- Stats Grid (Compact on mobile) -->
+                            <div class="pt-6 border-t border-slate-800 grid grid-cols-3 gap-2 sm:gap-4 text-center">
+                                <div class="bg-slate-800/50 rounded-lg p-2 sm:p-3 backdrop-blur-sm">
+                                    <div class="text-lg sm:text-2xl font-bold text-white"><span id="res-hours-saved">0</span></div>
+                                    <div class="text-[9px] sm:text-[10px] text-slate-400 uppercase tracking-wide mt-0.5">Hrs Saved</div>
+                                </div>
+                                <div class="bg-slate-800/50 rounded-lg p-2 sm:p-3 backdrop-blur-sm">
+                                    <div class="text-lg sm:text-2xl font-bold text-white">150</div>
+                                    <div class="text-[9px] sm:text-[10px] text-slate-400 uppercase tracking-wide mt-0.5">Scouts</div>
+                                </div>
+                                <div class="bg-slate-800/50 rounded-lg p-2 sm:p-3 backdrop-blur-sm">
+                                    <div class="text-lg sm:text-2xl font-bold text-white">$<span id="res-labor-value">0</span></div>
+                                    <div class="text-[9px] sm:text-[10px] text-slate-400 uppercase tracking-wide mt-0.5">Labor $$</div>
+                                </div>
+                            </div>
+
+                            <!-- CTA Button -->
+                            <div class="mt-6 sm:mt-8">
+                                <button onclick="window.location.href='/install'" class="w-full bg-white text-purple-900 hover:bg-slate-100 font-bold text-base sm:text-lg py-3.5 sm:py-4 rounded-xl shadow-[0_0_20px_rgba(255,255,255,0.3)] transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2">
+                                    Start Saving $<span id="btn-savings">0</span>/mo
+                                    <i class="fas fa-arrow-right"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Comparison Bar -->
+                        <div class="bg-white border border-slate-200 rounded-xl p-4 sm:p-6 shadow-sm">
+                            <h4 class="text-xs sm:text-sm font-semibold text-slate-900 mb-4 uppercase tracking-wide text-center">Output Multiplier</h4>
+                            
+                            <div class="space-y-4">
+                                <!-- Manual -->
+                                <div>
+                                    <div class="flex justify-between text-xs mb-1.5">
+                                        <span class="font-medium text-slate-600">You (Manual)</span>
+                                        <span class="text-slate-500"><span id="bar-manual-count">0</span> leads</span>
+                                    </div>
+                                    <div class="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                                        <div id="bar-manual-fill" class="h-full bg-slate-400 rounded-full transition-all duration-500" style="width: 0%"></div>
+                                    </div>
+                                </div>
+
+                                <!-- Ultra -->
+                                <div>
+                                    <div class="flex justify-between text-xs mb-1.5">
+                                        <span class="font-bold text-purple-700 flex items-center gap-1.5">
+                                            <span class="w-2 h-2 rounded-full bg-purple-600 animate-pulse"></span>
+                                            Hello! Ultra
+                                        </span>
+                                        <span class="font-bold text-purple-700">150 leads</span>
+                                    </div>
+                                    <div class="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden relative">
+                                        <div class="absolute inset-0 bg-purple-50 w-full h-full"></div>
+                                        <div class="h-full bg-gradient-to-r from-purple-500 to-indigo-600 rounded-full w-full transition-all duration-500 shadow-[0_0_10px_rgba(147,51,234,0.5)]"></div>
+                                    </div>
+                                    <p class="text-[10px] sm:text-xs text-right text-green-600 font-bold mt-1.5">
+                                        <i class="fas fa-bolt mr-1"></i> <span id="multiplier-val">0</span>x more productive
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Logic Script -->
+    <script>
+        // Constants
+        const ULTRA_COST = 29;
+        const ULTRA_SCOUTS = 150;
+        const MANUAL_MINS_PER_LEAD = 15;
+        const CONVERSION_RATE = 0.05; // 5%
+
+        // Elements
+        const modal = document.getElementById('roi-modal');
+        const inputs = {
+            hourly: document.getElementById('input-hourly'),
+            hours: document.getElementById('input-hours'),
+            deal: document.getElementById('input-deal')
+        };
+        const labels = {
+            hourly: document.getElementById('val-hourly'),
+            hours: document.getElementById('val-hours'),
+            deal: document.getElementById('val-deal')
+        };
+        const results = {
+            value: document.getElementById('result-value'),
+            roi: document.getElementById('result-roi'),
+            hoursSaved: document.getElementById('res-hours-saved'),
+            laborValue: document.getElementById('res-labor-value'),
+            btnSavings: document.getElementById('btn-savings'),
+            manualCount: document.getElementById('bar-manual-count'),
+            manualBar: document.getElementById('bar-manual-fill'),
+            multiplier: document.getElementById('multiplier-val')
+        };
+
+        function openRoiCalculator() {
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden'; // Prevent background scroll
+            calculateROI();
+        }
+
+        function closeRoiCalculator() {
+            modal.classList.add('hidden');
+            document.body.style.overflow = ''; // Restore background scroll
+        }
+
+        // Format numbers (compact for mobile)
+        const fmt = (num) => {
+            if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+            if (num >= 1000) return Math.round(num).toLocaleString();
+            return Math.round(num);
+        };
+
+        function calculateROI() {
+            // Get Values
+            const hourlyRate = parseInt(inputs.hourly.value);
+            const weeklyHours = parseInt(inputs.hours.value);
+            const dealValue = parseInt(inputs.deal.value);
+
+            // Update Input Labels
+            labels.hourly.innerText = hourlyRate;
+            labels.hours.innerText = weeklyHours;
+            labels.deal.innerText = dealValue.toLocaleString();
+
+            // 1. Manual Reality
+            const monthlyManualHours = weeklyHours * 4;
+            const manualLeadsPerMonth = (monthlyManualHours * 60) / MANUAL_MINS_PER_LEAD;
+            
+            // 2. Ultra Reality (Time Savings)
+            const hoursToFind150Leads = (ULTRA_SCOUTS * MANUAL_MINS_PER_LEAD) / 60;
+            const valueOfTimeSaved = hoursToFind150Leads * hourlyRate;
+
+            // 3. Revenue Upside
+            const dealsManual = manualLeadsPerMonth * CONVERSION_RATE;
+            const dealsUltra = ULTRA_SCOUTS * CONVERSION_RATE;
+            const revenueDiff = (dealsUltra - dealsManual) * dealValue;
+
+            // 4. Totals
+            const totalMonthlyValue = valueOfTimeSaved + revenueDiff;
+            const netBenefit = totalMonthlyValue - ULTRA_COST;
+            const roi = (netBenefit / ULTRA_COST) * 100;
+
+            // 5. Update UI
+            results.value.innerText = fmt(totalMonthlyValue);
+            results.roi.innerText = fmt(roi);
+            results.hoursSaved.innerText = Math.round(hoursToFind150Leads);
+            results.laborValue.innerText = fmt(valueOfTimeSaved);
+            results.btnSavings.innerText = fmt(netBenefit);
+
+            // Update Chart
+            results.manualCount.innerText = Math.round(manualLeadsPerMonth);
+            const widthPercent = Math.min(100, (manualLeadsPerMonth / ULTRA_SCOUTS) * 100);
+            results.manualBar.style.width = `${widthPercent}%`;
+            
+            const multiplier = Math.round(ULTRA_SCOUTS / Math.max(1, manualLeadsPerMonth));
+            results.multiplier.innerText = multiplier;
+        }
+
+        // Initialize
+        calculateROI();
+
+        // Close on backdrop click
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeRoiCalculator();
+        });
+        
+        // Close on Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && !modal.classList.contains('hidden')) closeRoiCalculator();
+        });
+    </script>
+    <!-- ========================================== -->
+    <!-- WIDGET CODE ENDS HERE -->
+    <!-- ========================================== -->
+
+</body>
+</html>
