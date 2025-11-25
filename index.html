@@ -150,7 +150,7 @@
                                 </div>
 
                                 <div class="flex flex-col justify-center">
-                                    <p class="text-purple-300 text-[10px] sm:text-xs uppercase tracking-wider font-bold mb-1">Your Monthly Value</p>
+                                    <p class="text-purple-300 text-[10px] sm:text-xs uppercase tracking-wider font-bold mb-1">Total Monthly Value</p>
                                     <div class="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-2">
                                         <span class="text-4xl sm:text-5xl font-bold text-green-400 tracking-tight">$<span id="result-value">0</span></span>
                                     </div>
@@ -165,16 +165,16 @@
 
                             <div class="pt-6 border-t border-slate-800 grid grid-cols-3 gap-2 sm:gap-4 text-center">
                                 <div class="bg-slate-800/50 rounded-lg p-2 sm:p-3 backdrop-blur-sm">
-                                    <div class="text-lg sm:text-2xl font-bold text-white"><span id="res-hours-saved">0</span></div>
-                                    <div class="text-[9px] sm:text-[10px] text-slate-400 uppercase tracking-wide mt-0.5">Hrs Saved</div>
+                                    <div class="text-lg sm:text-2xl font-bold text-white"><span id="res-leads-replaced">0</span></div>
+                                    <div class="text-[9px] sm:text-[10px] text-slate-400 uppercase tracking-wide mt-0.5">Leads Replaced</div>
                                 </div>
                                 <div class="bg-slate-800/50 rounded-lg p-2 sm:p-3 backdrop-blur-sm">
-                                    <div class="text-lg sm:text-2xl font-bold text-white">150</div>
-                                    <div class="text-[9px] sm:text-[10px] text-slate-400 uppercase tracking-wide mt-0.5">Scouts</div>
+                                    <div class="text-lg sm:text-2xl font-bold text-white"><span id="res-leads-growth">0</span></div>
+                                    <div class="text-[9px] sm:text-[10px] text-slate-400 uppercase tracking-wide mt-0.5">Bonus Leads</div>
                                 </div>
                                 <div class="bg-slate-800/50 rounded-lg p-2 sm:p-3 backdrop-blur-sm">
                                     <div class="text-lg sm:text-2xl font-bold text-white">$<span id="res-labor-value">0</span></div>
-                                    <div class="text-[9px] sm:text-[10px] text-slate-400 uppercase tracking-wide mt-0.5">Labor Value</div>
+                                    <div class="text-[9px] sm:text-[10px] text-slate-400 uppercase tracking-wide mt-0.5">Labor Savings</div>
                                 </div>
                             </div>
 
@@ -229,8 +229,9 @@
         // Constants
         const ULTRA_COST = 29;
         const ULTRA_SCOUTS = 150;
-        // Manual speed: 15 mins per lead (4 leads per hour).
-        const MANUAL_LEADS_PER_HOUR = 4; 
+        const MANUAL_LEADS_PER_HOUR = 4; // 15 mins/lead
+        const CONVERSION_RATE = 0.05; // 5% conversion assume for growth value
+        const WEEKS_PER_MONTH = 4.3;
 
         // Elements
         const modal = document.getElementById('roi-modal');
@@ -247,7 +248,8 @@
         const results = {
             value: document.getElementById('result-value'),
             roi: document.getElementById('result-roi'),
-            hoursSaved: document.getElementById('res-hours-saved'),
+            leadsReplaced: document.getElementById('res-leads-replaced'),
+            leadsGrowth: document.getElementById('res-leads-growth'),
             laborValue: document.getElementById('res-labor-value'),
             btnSavings: document.getElementById('btn-savings'),
             manualCount: document.getElementById('bar-manual-count'),
@@ -274,7 +276,7 @@
         };
 
         function calculateROI() {
-            // Get Values
+            // 1. Get User Inputs
             const hourlyRate = parseInt(inputs.hourly.value);
             const weeklyHours = parseInt(inputs.hours.value);
             const dealValue = parseInt(inputs.deal.value);
@@ -284,52 +286,75 @@
             labels.hours.innerText = weeklyHours;
             labels.deal.innerText = dealValue.toLocaleString();
 
-            // --- REVISED LOGIC (Labor Buyback / Unit Economics) ---
+            // --- REVISED LOGIC: Replacement + Growth Model ---
             
-            // 1. Calculate the raw time value of the 150 leads Ultra provides.
-            //    150 leads / 4 leads per hour = 37.5 hours saved.
-            const hoursSavedByUltra = ULTRA_SCOUTS / MANUAL_LEADS_PER_HOUR;
+            // A. Calculate Current Manual Output
+            // e.g. 5 hours/week * 4.3 weeks * 4 leads/hr = 86 leads/month
+            const manualMonthlyLeads = weeklyHours * WEEKS_PER_MONTH * MANUAL_LEADS_PER_HOUR;
+
+            // B. Determine how Ultra interacts with this volume
+            // Ultra provides 150 leads fixed.
             
-            // 2. What is the monetary value of that saved time?
-            //    37.5 hours * User's Hourly Rate
-            const laborValueSaved = hoursSavedByUltra * hourlyRate;
+            // 1. Replacement Volume: How many of the User's manual leads does Ultra take over?
+            // Cap at 150. If User does 200, Ultra replaces 150. If User does 50, Ultra replaces 50.
+            const replacementLeads = Math.min(manualMonthlyLeads, ULTRA_SCOUTS);
 
-            // 3. Net Benefit (Pure Savings)
-            //    Value of Labor Saved - Cost of Tool
-            const netBenefit = laborValueSaved - ULTRA_COST;
+            // 2. Growth Volume: How many NEW leads does Ultra add?
+            // If User does 50, Ultra adds 100. If User does 200, Ultra adds 0.
+            const growthLeads = Math.max(0, ULTRA_SCOUTS - manualMonthlyLeads);
 
-            // 4. ROI Percentage
-            //    (Net Benefit / Cost) * 100
+            // C. Calculate Monetary Value
+            
+            // 1. Value of Replacement (Labor Savings)
+            // Each replaced lead saves (15 mins) of labor.
+            // Cost per manual lead = Hourly Rate / 4.
+            const costPerManualLead = hourlyRate / MANUAL_LEADS_PER_HOUR;
+            const replacementValue = replacementLeads * costPerManualLead;
+
+            // 2. Value of Growth (New Revenue Potential)
+            // Each new lead has a potential deal value.
+            // Value = Leads * Conversion Rate * Deal Value.
+            const growthValue = growthLeads * CONVERSION_RATE * dealValue;
+
+            // 3. Total Monthly Value
+            const totalMonthlyValue = replacementValue + growthValue;
+
+            // 4. Net Benefit & ROI
+            const netBenefit = totalMonthlyValue - ULTRA_COST;
             const roi = (netBenefit / ULTRA_COST) * 100;
 
-            // Update UI - Main ROI
-            results.value.innerText = fmt(netBenefit);
+            // --- UPDATE UI ---
+            
+            // Main Results
+            results.value.innerText = fmt(totalMonthlyValue);
             results.roi.innerText = fmt(roi);
             
-            // Update UI - Stats Grid
-            results.hoursSaved.innerText = Math.round(hoursSavedByUltra); // Always ~38
-            results.laborValue.innerText = fmt(laborValueSaved);
+            // Stats Grid
+            results.leadsReplaced.innerText = Math.round(replacementLeads);
+            results.leadsGrowth.innerText = Math.round(growthLeads);
+            results.laborValue.innerText = fmt(replacementValue);
+            
+            // CTA
             results.btnSavings.innerText = fmt(netBenefit);
 
-            // --- CHART LOGIC: Cost Per Lead Comparison ---
+            // --- CHART LOGIC: Cost Per Lead Efficiency ---
+            // This compares the UNIT COST, showing why Ultra is efficient regardless of volume.
             
-            // Manual Cost per Lead = Hourly Rate / 4 leads per hour
-            // e.g., $100/hr / 4 = $25/lead
-            const manualCostPerLead = hourlyRate / MANUAL_LEADS_PER_HOUR;
+            // Manual Cost per Lead (Derived from Hourly Rate)
+            // e.g. $100/hr / 4 leads = $25/lead
+            const manualUnitCost = costPerManualLead;
             
-            // Ultra Cost per Lead = $29 / 150 = $0.19/lead
-            const ultraCostPerLead = ULTRA_COST / ULTRA_SCOUTS; 
+            // Ultra Cost per Lead (Fixed)
+            // $29 / 150 leads = $0.19/lead
+            const ultraUnitCost = ULTRA_COST / ULTRA_SCOUTS; 
             
             // Update Chart Text
-            results.manualCount.innerText = manualCostPerLead.toFixed(2);
+            results.manualCount.innerText = manualUnitCost.toFixed(2);
             
             // Update Bar Widths
-            // Manual is the baseline (100% width)
             results.manualBar.style.width = `100%`;
             
-            // Ultra bar relative to Manual
-            // If Manual is $25 and Ultra is $0.19, the bar should be very small.
-            const ultraBarPercent = (ultraCostPerLead / manualCostPerLead) * 100;
+            const ultraBarPercent = (ultraUnitCost / manualUnitCost) * 100;
             // Ensure at least 1% so it is visible
             const ultraBarFill = document.getElementById('bar-ultra-fill');
             if(ultraBarFill) {
@@ -337,7 +362,7 @@
             }
             
             // Efficiency Multiplier
-            const efficiencyMultiplier = Math.round(manualCostPerLead / ultraCostPerLead);
+            const efficiencyMultiplier = Math.round(manualUnitCost / ultraUnitCost);
             results.multiplier.innerText = efficiencyMultiplier;
         }
 
