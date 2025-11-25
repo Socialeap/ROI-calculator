@@ -21,6 +21,10 @@
             cursor: pointer;
             margin-top: -10px;
             box-shadow: 0 0 0 4px rgba(126, 34, 206, 0.2);
+            transition: transform 0.1s ease-in-out;
+        }
+        input[type=range]::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
         }
         input[type=range]::-webkit-slider-runnable-track {
             width: 100%;
@@ -29,10 +33,6 @@
             background: #334155;
             border-radius: 2px;
         }
-        .modal-enter { opacity: 0; transform: scale(0.95); }
-        .modal-enter-active { opacity: 1; transform: scale(1); transition: opacity 300ms, transform 300ms; }
-        .modal-exit { opacity: 1; transform: scale(1); }
-        .modal-exit-active { opacity: 0; transform: scale(0.95); transition: opacity 300ms, transform 300ms; }
     </style>
 </head>
 <body class="bg-gray-900 text-white font-sans antialiased">
@@ -45,12 +45,12 @@
 
     <div id="roi-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm hidden">
         
-        <div class="bg-slate-900 w-full max-w-5xl rounded-2xl border border-slate-700 shadow-2xl overflow-hidden flex flex-col md:flex-row max-h-[95vh] md:h-auto">
+        <div class="bg-slate-900 w-full max-w-6xl rounded-2xl border border-slate-700 shadow-2xl overflow-hidden flex flex-col md:flex-row max-h-[95vh] md:h-auto">
             
-            <div class="w-full md:w-5/12 p-6 md:p-8 bg-slate-800/50 border-r border-slate-700 flex flex-col justify-center space-y-8">
+            <div class="w-full md:w-5/12 p-6 md:p-8 bg-slate-800/50 border-r border-slate-700 flex flex-col justify-center space-y-8 overflow-y-auto">
                 <div>
-                    <h2 class="text-2xl font-bold mb-2">Your Context</h2>
-                    <p class="text-slate-400 text-sm">Let's value your time.</p>
+                    <h2 class="text-2xl font-bold mb-2">Your Networking Efficiency</h2>
+                    <p class="text-slate-400 text-sm">Let's value your time & potential.</p>
                 </div>
 
                 <div class="space-y-4">
@@ -78,75 +78,107 @@
                     <input type="range" id="in-speed" min="5" max="60" step="5" value="15" oninput="calc()">
                     <p class="text-xs text-slate-500">How long to find & vet 1 good lead manually?</p>
                 </div>
-
-                <div class="space-y-4 opacity-75 hover:opacity-100 transition">
+                
+                <div class="space-y-4">
                     <div class="flex justify-between items-center">
                         <label class="text-sm font-semibold text-slate-300">
-                            <i class="fas fa-handshake w-5 text-indigo-400"></i>Deal Value
+                            <i class="fas fa-bullseye w-5 text-indigo-400"></i>Target Leads
+                        </label>
+                        <span class="bg-indigo-900/50 text-indigo-300 text-xs font-bold px-3 py-1 rounded border border-indigo-500/30">
+                            <span id="lbl-leads">150</span> /mo
+                        </span>
+                    </div>
+                    <input type="range" id="in-leads" min="150" max="1000" step="50" value="150" oninput="calc()">
+                    <p class="text-xs text-slate-500">Need more? Add 50 scouts for just $15.</p>
+                </div>
+
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center">
+                        <label class="text-sm font-semibold text-slate-300">
+                            <i class="fas fa-handshake w-5 text-indigo-400"></i>Avg. Deal Value
                         </label>
                         <span class="bg-indigo-900/50 text-indigo-300 text-xs font-bold px-3 py-1 rounded border border-indigo-500/30">
                             $<span id="lbl-deal">1,000</span>
                         </span>
                     </div>
                     <input type="range" id="in-deal" min="500" max="10000" step="500" value="1000" oninput="calc()">
-                    <p class="text-xs text-slate-500">Avg. value of a successful connection.</p>
+                    <p class="text-xs text-slate-500">Value of one closed client. (Impacts revenue projection)</p>
                 </div>
             </div>
 
-            <div class="w-full md:w-7/12 p-6 md:p-8 bg-gradient-to-br from-slate-900 to-indigo-950 flex flex-col justify-between">
+            <div class="w-full md:w-7/12 p-6 md:p-8 bg-gradient-to-br from-slate-900 to-indigo-950 flex flex-col justify-between overflow-y-auto">
                 
-                <div class="flex justify-end mb-4">
-                    <button onclick="closeModal()" class="text-slate-400 hover:text-white"><i class="fas fa-times text-xl"></i></button>
+                <div class="flex justify-end mb-2">
+                    <button onclick="closeModal()" class="text-slate-400 hover:text-white transition-colors"><i class="fas fa-times text-xl"></i></button>
                 </div>
 
                 <div class="space-y-6">
                     
                     <div class="bg-white/5 border border-white/10 rounded-2xl p-6 relative overflow-hidden backdrop-blur-sm">
-                        <div class="absolute top-0 right-0 p-4 opacity-10"><i class="fas fa-robot text-9xl"></i></div>
+                        <div class="absolute top-0 right-0 p-4 opacity-10"><i class="fas fa-rocket text-9xl"></i></div>
                         
                         <div class="relative z-10 grid grid-cols-2 gap-8 border-b border-white/10 pb-6 mb-6">
                             <div>
-                                <p class="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Monthly Cost</p>
-                                <h3 class="text-4xl font-bold text-white">$29</h3>
+                                <p class="text-slate-400 text-[10px] md:text-xs font-bold uppercase tracking-wider mb-1">Your Subscription</p>
+                                <div class="flex items-baseline gap-1">
+                                    <h3 class="text-3xl md:text-4xl font-bold text-white">$<span id="res-cost">29</span></h3>
+                                    <span class="text-slate-400 text-sm">/mo</span>
+                                </div>
+                                <p class="text-[10px] text-slate-500 mt-1" id="res-cost-breakdown">Base Plan</p>
                             </div>
                             <div>
-                                <p class="text-indigo-300 text-xs font-bold uppercase tracking-wider mb-1">Net Monthly Value</p>
-                                <h3 class="text-5xl font-bold text-green-400">$<span id="res-net">0</span></h3>
+                                <p class="text-indigo-300 text-[10px] md:text-xs font-bold uppercase tracking-wider mb-1">Net Monthly Value</p>
+                                <h3 class="text-4xl md:text-5xl font-bold text-green-400">$<span id="res-net">0</span></h3>
+                                <p class="text-[10px] text-green-500/80 mt-1">Labor Savings + Potential Revenue</p>
                             </div>
                         </div>
 
-                        <div class="text-slate-300 text-sm leading-relaxed">
-                            Ultra finds <strong class="text-white">150 leads</strong> for you. At your speed, that saves you <strong class="text-white"><span id="res-hours">0</span> hours</strong> of manual work per month.
+                        <div class="text-slate-300 text-sm leading-relaxed relative z-10">
+                            <p>
+                                <i class="fas fa-check-circle text-green-500 mr-1"></i> 
+                                Saves <strong class="text-white"><span id="res-hours">0</span> hours</strong> of manual work.
+                            </p>
+                            <p class="mt-1">
+                                <i class="fas fa-check-circle text-green-500 mr-1"></i> 
+                                Generates <strong class="text-white">$<span id="res-revenue">0</span></strong> in potential pipeline revenue.<sup class="text-[9px] text-slate-500 ml-1">(est. 5% conv)</sup>
+                            </p>
                         </div>
                     </div>
 
-                    <div class="space-y-3">
-                        <div class="flex justify-between text-xs font-medium text-slate-400">
-                            <span>Cost Per Lead (Manual)</span>
-                            <span class="text-white">$<span id="res-cpl-manual">0</span></span>
-                        </div>
-                        <div class="w-full bg-slate-700 h-2 rounded-full overflow-hidden">
-                            <div class="bg-slate-500 h-full w-full"></div>
+                    <div class="bg-slate-800/40 rounded-xl p-5 border border-slate-700/50">
+                        <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wide mb-4 text-center">Total Monthly Investment Required</h4>
+                        
+                        <div class="mb-4">
+                            <div class="flex justify-between text-xs font-medium text-slate-400 mb-1">
+                                <span>Manual Sourcing (Labor Cost)</span>
+                                <span class="text-white">$<span id="res-invest-manual">0</span></span>
+                            </div>
+                            <div class="w-full bg-slate-700 h-3 rounded-full overflow-hidden">
+                                <div class="bg-slate-500 h-full w-full"></div>
+                            </div>
                         </div>
 
-                        <div class="flex justify-between text-xs font-medium text-indigo-300 pt-1">
-                            <span>Cost Per Lead (Ultra)</span>
-                            <span class="text-green-400 font-bold">$0.19</span>
+                        <div>
+                            <div class="flex justify-between text-xs font-medium text-indigo-300 mb-1">
+                                <span>Hello! Ultra (Subscription)</span>
+                                <span class="text-green-400 font-bold">$<span id="res-invest-ultra">29</span></span>
+                            </div>
+                            <div class="w-full bg-slate-700 h-3 rounded-full overflow-hidden relative">
+                                <div id="bar-ultra" class="bg-gradient-to-r from-green-500 to-emerald-400 h-full shadow-[0_0_12px_rgba(52,211,153,0.6)] transition-all duration-500" style="width: 1%"></div>
+                            </div>
+                            <p class="text-right text-xs text-green-500 font-bold mt-2">
+                                <i class="fas fa-bolt text-yellow-400 mr-1"></i> <span id="res-multiplier">0</span>x More Cost Effective
+                            </p>
                         </div>
-                        <div class="w-full bg-slate-700 h-2 rounded-full overflow-hidden relative">
-                            <div id="bar-ultra" class="bg-green-500 h-full shadow-[0_0_10px_rgba(74,222,128,0.5)] transition-all duration-500" style="width: 1%"></div>
-                        </div>
-                        <p class="text-right text-xs text-green-500 font-mono mt-1"><span id="res-multiplier">0</span>x Cheaper</p>
                     </div>
 
                 </div>
 
                 <div class="mt-8">
                     <button class="w-full group bg-white hover:bg-indigo-50 text-indigo-900 font-bold text-lg py-4 rounded-xl shadow-lg transition-all flex items-center justify-center gap-3">
-                        <span>Activate for $29/mo</span>
+                        <span>Start for $<span id="btn-cost">29</span>/mo</span>
                         <i class="fas fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
                     </button>
-                    <p class="text-center text-xs text-slate-500 mt-3">Calculated Savings: $<span id="btn-saving">0</span> / year</p>
                 </div>
             </div>
 
@@ -155,8 +187,11 @@
 
     <script>
         const modal = document.getElementById('roi-modal');
-        const ULTRA_COST = 29;
-        const ULTRA_LEADS = 150;
+        const BASE_COST = 29;
+        const BASE_LEADS = 150;
+        const ADDON_BLOCK = 50;
+        const ADDON_PRICE = 15;
+        const CONVERSION_RATE = 0.05; // 5% estimate
 
         function openModal() {
             modal.classList.remove('hidden');
@@ -169,51 +204,73 @@
         function fmt(n) { return Math.round(n).toLocaleString(); }
 
         function calc() {
-            // Inputs
+            // 1. Get Inputs
             const hourly = parseInt(document.getElementById('in-hourly').value);
             const speed = parseInt(document.getElementById('in-speed').value);
+            const leads = parseInt(document.getElementById('in-leads').value);
             const deal = parseInt(document.getElementById('in-deal').value);
 
-            // Update Labels
+            // 2. Update Label Text
             document.getElementById('lbl-hourly').innerText = hourly;
             document.getElementById('lbl-speed').innerText = speed;
+            document.getElementById('lbl-leads').innerText = leads;
             document.getElementById('lbl-deal').innerText = fmt(deal);
 
-            // --- CORE LOGIC: THE "HIRED GUN" MODEL ---
+            // 3. Calculate Subscription Cost (Base + Add-ons)
+            let totalCost = BASE_COST;
+            let breakdownText = "Base Plan";
             
-            // 1. Time Saved
-            // 150 leads * (Minutes per lead / 60) = Hours Saved
-            const hoursSaved = (ULTRA_LEADS * speed) / 60;
+            if (leads > BASE_LEADS) {
+                const extraLeads = leads - BASE_LEADS;
+                const packs = Math.ceil(extraLeads / ADDON_BLOCK);
+                const extraCost = packs * ADDON_PRICE;
+                totalCost += extraCost;
+                breakdownText = `Base ($29) + ${packs} Add-ons ($${extraCost})`;
+            }
 
-            // 2. Labor Value (Gross)
+            // 4. Calculate Labor Savings (The "Replaced" Value)
+            // Time it takes to get 'leads' manually
+            const hoursSaved = (leads * speed) / 60;
             const laborValue = hoursSaved * hourly;
 
-            // 3. Net Value (Gross - Cost)
-            const netValue = laborValue - ULTRA_COST;
+            // 5. Calculate Potential Revenue (The "Deal Value" Impact)
+            const potentialRevenue = leads * CONVERSION_RATE * deal;
 
-            // 4. Cost Per Lead Logic
-            // Manual CPL = (Hourly / 60) * Minutes per lead
-            const manualCPL = (hourly / 60) * speed;
-            const ultraCPL = ULTRA_COST / ULTRA_LEADS; // 0.193
+            // 6. Net Monthly Value
+            // Value = (Labor Saved + Revenue Gained) - Cost
+            const totalValue = laborValue + potentialRevenue;
+            const netValue = totalValue - totalCost;
 
-            // --- UPDATE UI ---
+            // --- UI UPDATES ---
+
+            // Top Card
+            document.getElementById('res-cost').innerText = totalCost;
+            document.getElementById('res-cost-breakdown').innerText = breakdownText;
             document.getElementById('res-net').innerText = fmt(netValue);
-            document.getElementById('res-hours').innerText = hoursSaved.toFixed(1);
             
-            // Stats for CTA (Annualized savings)
-            document.getElementById('btn-saving').innerText = fmt(netValue * 12);
+            // Narrative
+            document.getElementById('res-hours').innerText = Math.round(hoursSaved);
+            document.getElementById('res-revenue').innerText = fmt(potentialRevenue);
 
-            // Chart
-            document.getElementById('res-cpl-manual').innerText = manualCPL.toFixed(2);
-            
+            // Bottom Bars: Investment Comparison
+            // Manual Investment = The Labor Cost
+            document.getElementById('res-invest-manual').innerText = fmt(laborValue);
+            // Ultra Investment = The Subscription Cost
+            document.getElementById('res-invest-ultra').innerText = totalCost;
+
             // Bar Width Logic
-            // If Manual is $25 and Ultra is $0.19...
-            // Ultra is (0.19 / 25) * 100 = 0.7% width relative to manual
-            const pct = (ultraCPL / manualCPL) * 100;
-            document.getElementById('bar-ultra').style.width = Math.max(1, pct) + "%";
+            // We want to visually compare Total Cost. 
+            // Manual Bar is 100% of container. Ultra Bar is % of Manual.
+            // If Manual is $2000 and Ultra is $29, Ultra bar is 1.45% width.
+            const ultraPercent = (totalCost / laborValue) * 100;
+            document.getElementById('bar-ultra').style.width = Math.max(1, ultraPercent) + "%";
 
             // Multiplier
-            document.getElementById('res-multiplier').innerText = Math.round(manualCPL / ultraCPL);
+            const multiplier = Math.round(laborValue / totalCost);
+            document.getElementById('res-multiplier').innerText = multiplier;
+
+            // Button
+            document.getElementById('btn-cost').innerText = totalCost;
         }
     </script>
 </body>
